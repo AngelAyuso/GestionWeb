@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8" />
+	<title>Biblioteca</title>
+	<link rel="stylesheet" th:href="@{/css/perfil.css}" />	
+</head>
+<body>
+	<form th:action="@{updateUsuarioForm}" th:object="${usuarioCA}" method="post" >
+		<div class="box">
+			<h1><a th:text="#{perfil.title}"/></h1>
+			
+			<!-- Mensaje de modificar correctamente -->
+			<div th:if="${successUpdate != null and successUpdate}">
+				<div id="successUpdate" th:text="${successMsg} " ></div>
+			</div>
+			
+			<a th:text="#{perfil.nombre}"/><input type="text" name="nombre" th:field="*{nombre}" class="inputAlta" /><br/>
+			<a th:text="#{perfil.primerApellido}"/><input type="text" name="primerApellido" th:field="*{primerApellido}" class="inputAlta" /><br/>
+			<a th:text="#{perfil.segundoApellido}"/><input type="text" name="segundoApellido" th:field="*{segundoApellido}" class="inputAlta" /><br/>
+			<a th:text="#{perfil.dni}"/><br/><input type="text" name="dni" th:field="*{dni}" class="inputAlta" /><br/>
+				<small th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}"></small><br/>
+			<a th:text="#{perfil.email}"/><input type="text" name="email" th:field="*{email}" class="inputAlta" /><br/>
+				<small th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small><br/>
+			<a th:text="#{perfil.telefono}"/><input type="text" name="telefono" th:field="*{telefono}" class="inputAlta" /><br/>	
+				<small th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}"></small><br/>
+			<!-- Mensaje de error -->
+			<div th:if="${errorUpdate != null and errorUpdate}">
+				<div th:text=" ${errorMsg} " ></div>
+			</div>
+			
+			<input type="hidden" name="idusuario" th:field="*{idUsuario}"/>
+			<input type="submit" th:value="#{perfil.editar}"  class="btn">
+			<div id="btn2"><a class="nounderline" th:href="@{/menu(idUsuario=*{idUsuario})}" th:text="#{perfil.volver}"/></div> <!-- End Btn2 -->
+		</div>
+	</form>
+</body>
+</html>

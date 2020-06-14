@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8" />
+	<title>Biblioteca</title>
+	<link rel="stylesheet" th:href="@{/css/altaUsuario.css}" />	
+</head>
+	<body>
+		<form th:action="@{altaUsuarioForm}" th:object="${usuarioCA}" method="post" >
+			<div class="box">
+				<h1><a th:text="#{altaUsuario.title}"/></h1>
+					
+					<input type="text" name="nombre" autocomplete="off" th:placeholder="#{altaUsuario.nombre}" onFocus="field_focus(this, 'nombre');" onblur="field_blur(this, 'nombre');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></small>
+					
+					<input type="text" name="primerApellido" autocomplete="off" th:placeholder="#{altaUsuario.primerApellido}" onFocus="field_focus(this, 'user');" onblur="field_blur(this, 'user');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('primerApellido')}" th:errors="*{primerApellido}"></small>
+					
+					<input type="text" name="segundoApellido" autocomplete="off" th:placeholder="#{altaUsuario.segundoApellido}" onFocus="field_focus(this, 'segundoApellido');" onblur="field_blur(this, 'segundoApellido');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('segundoApellido')}" th:errors="*{segundoApellido}"></small>
+					
+					<input type="text" name="dni" autocomplete="off" th:placeholder="#{altaUsuario.dni}" onFocus="field_focus(this, 'dni');" onblur="field_blur(this, 'dni');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}"></small>
+					
+					<input type="text" name="email" autocomplete="off" th:placeholder="#{altaUsuario.email}" onFocus="field_focus(this, 'email');" onblur="field_blur(this, 'email');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+					
+					<input type="text" name="telefono" autocomplete="off" th:placeholder="#{altaUsuario.telefono}" onFocus="field_focus(this, 'telefono');" onblur="field_blur(this, 'telefono');" class="inputAlta" />
+  					<small th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}"></small>
+  
+					<input type="password" name="password" autocomplete="off" th:placeholder="#{altaUsuario.pwd1}" onFocus="field_focus(this, 'password');" onblur="field_blur(this, 'password');" class="inputAlta" />
+					<small th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+					
+					<input type="password" name="password2" th:placeholder="#{altaUsuario.pwd2}" onFocus="field_focus(this, 'password2');" onblur="field_blur(this, 'password2');" class="inputAlta" />
+  					
+  					<!-- Mensaje de error -->
+  					<div th:if="${errorAlta != null and errorAlta}">
+						<div th:text=" ${errorMsg} " ></div>
+					</div>
+  					
+  					<input type="submit" th:value="#{altaUsuario.enviar}"  class="btn">
+					<div id="btn2"><a class="nounderline" th:href="@{/index}" th:text="#{altaUsuario.volver}"/></div>
+			</div>
+		</form>
+	</body>
+</html>

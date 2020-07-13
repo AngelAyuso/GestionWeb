@@ -47,8 +47,8 @@ public class ServiceFeign implements IService {
 	}
 
 	@Override
-	public void eliminarUsuario(Integer id) {
-		uClienteRest.eliminarUsuario(id);
+	public ResultadoBean eliminarUsuario(HttpSession session, Integer id) {
+		return uClienteRest.eliminarUsuario(id);
 	}
 
 	@Override

@@ -12,9 +12,7 @@
 				
 				<div class="box">
 					<h1><a th:text="#{index.title}"/></h1>
-	
 						<input type="text" name="user" th:value="#{index.user}" onFocus="field_focus(this, 'user');" onblur="field_blur(this, 'user');" class="user" />
-	  
 						<input type="password" name="pwd" th:value="#{index.pwd}" onFocus="field_focus(this, 'pwd');" onblur="field_blur(this, 'pwd');" class="pwd" />
 	  					
 	  					<!-- Mensaje de error -->
@@ -22,14 +20,11 @@
 							<div th:text=" ${errorMsg} " ></div>
 						</div>
 	  					
-	  					<input type="submit" th:value="#{index.login}" class="btn"> <!-- value="#{index.login}" -->
-	
-						<div id="btn2"><a class="nounderline" th:href="@{/altaUsuario}" th:text="#{index.alta}"></a></div> <!-- End Btn2 -->
-	  
-				</div> <!-- End Box -->
+	  					<input type="submit" th:value="#{index.login}" class="btn">
+						<div id="btn2"><a class="nounderline" th:href="@{/altaUsuario}" th:text="#{index.alta}"></a></div>
+				</div>
 	  
 				<p><a th:text="#{index.pwdMessage}"/> <u style="color:#f1c40f;"><a th:text="#{index.pwdRef}"/></u></p>	
-				
 			</form>   
 		</div>
 	</body>

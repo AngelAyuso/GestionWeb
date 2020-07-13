@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8" />
+	<title>Biblioteca</title>
+	<link rel="stylesheet" th:href="@{/css/eliminarUsuario.css}" />	
+</head>
+	<body>
+	   <div class="box">
+			<h1><a th:text="#{eliminar.title}"/></h1>
+			<a th:text="#{eliminar.texto}"/>
+			
+			<form action="/eliminarUsuario" method="post" >
+				<input type="hidden" name="idUsuario" th:value="*{idUsuario}"/>
+				<input type="submit" th:value="#{eliminar.aceptar}" class="btn">
+				<div id="btn2"><a class="nounderline" th:href="@{/menu(idUsuario=*{idUsuario})}" th:text="#{eliminar.volver}"/></div>
+			
+				<!-- Mensaje de error -->
+ 					<div th:if="${errorEliminar != null and errorEliminar}">
+					<div th:text=" ${errorMsg} " ></div>
+				</div>
+			
+			</form>
+		</div>
+	</body>
+</html>

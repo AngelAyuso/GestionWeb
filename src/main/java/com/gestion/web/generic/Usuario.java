@@ -97,7 +97,7 @@ public class Usuario {
 	}
 	
 	public String toString() {
-        return String.format("idUsuario:"+idUsuario+"-nombre:"+nombre+"-primerApellido:"+primerApellido+"-segundoApellido:"+segundoApellido+
-        		"-email:"+email+"-telefono:"+telefono+"-dni:"+dni);
+        return String.format("idUsuario:"+idUsuario+";nombre:"+nombre+";primerApellido:"+primerApellido+";segundoApellido:"+segundoApellido+
+        		";email:"+email+";telefono:"+telefono+";dni:"+dni);
     }
 }

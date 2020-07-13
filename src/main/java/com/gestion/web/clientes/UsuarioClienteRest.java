@@ -37,5 +37,5 @@ public interface UsuarioClienteRest {
 	public ResultadoBean modificarUsuario(@RequestBody Usuario usuario, @PathVariable Integer id);
 	
 	@DeleteMapping("/api/usuario/eliminarUsuario")
-	public void eliminarUsuario(@PathVariable Integer id);
+	public ResultadoBean eliminarUsuario(@PathVariable Integer id);
 }

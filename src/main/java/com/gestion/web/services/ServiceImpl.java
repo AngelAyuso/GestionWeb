@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.core.env.Environment;
@@ -44,6 +45,7 @@ public class ServiceImpl implements IService {
 	@Autowired
 	RestTemplate clienteRestUsuario;
 	
+	private static final Logger logger = Logger.getLogger(ServiceImpl.class);
 	private final static String CONS_PROPERTY_TOKEN = "CONS_PROPERTY_TOKEN";
 	
 	/**
@@ -53,6 +55,8 @@ public class ServiceImpl implements IService {
 	 */
 	@Override
 	public ResultadoBean getToken(HttpSession session, String id, String pass) {
+		
+		logger.info("/getToken ");
 		
 		ResultadoBean resultado = new ResultadoBean();
 		
@@ -68,13 +72,15 @@ public class ServiceImpl implements IService {
 			if(resultado.getUsuario() == null) {
 				resultado.setResultado(Constantes.CONS_RESULTADO_KO);
 				resultado.setCodError(ConstantesErrores.COD_ERROR_105);
+				logger.error("  Error - " + ConstantesErrores.COD_ERROR_105);
 			}
 		}
 				
 		HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<MultiValueMap<String, String>>(getBodyToken(id, pass), getHttpHeadersToken());
+		logger.info("  Invocacion oauthToken");
 		try {
 			ResponseEntity<Object> responseEntity = clienteRestUsuario.exchange("http://localhost:8090/api/security/oauth/token", HttpMethod.POST, entity, Object.class);
-			System.out.println("S " + responseEntity.getStatusCode().toString());
+			logger.info("    StatusCode - " + responseEntity.getStatusCode().toString());
 			if(responseEntity.getStatusCode().toString().startsWith(Constantes.HTTP_200)) {
 				LinkedHashMap<String,String> map = (LinkedHashMap<String, String>) responseEntity.getBody();
 				//Guardamos la informacion del Token en Memoria
@@ -84,18 +90,26 @@ public class ServiceImpl implements IService {
 				token.setRefreshToken(map.get("refresh_token"));
 				session.setAttribute(CONS_PROPERTY_TOKEN, token);
 				resultado.setResultado(Constantes.CONS_RESULTADO_OK);
+				logger.info("    Token - " + token.getToken());
+				logger.info("    TokenType - " + token.getTokenType());
+				logger.info("    RefreshToken - " + token.getRefreshToken());
 			} else {
 				resultado.setResultado(Constantes.CONS_RESULTADO_KO);
 				resultado.setCodError(Constantes.COD_ERROR_200);
+				logger.error("    Error - " + ConstantesErrores.COD_ERROR_200);
 			}
 		} catch(HttpStatusCodeException ex) {
 			resultado.setResultado(Constantes.CONS_RESULTADO_KO);
-			resultado.setCodError(Constantes.COD_ERROR_200);			
+			resultado.setCodError(Constantes.COD_ERROR_200);
+			logger.error("    HttpStatusCodeException - " + ex.getMessage());
 		} catch(RestClientException  ex) {
 			resultado.setResultado(Constantes.CONS_RESULTADO_KO);
 			resultado.setCodError(Constantes.COD_ERROR_200);
+			logger.error("    RestClientException - " + ex.getMessage());
 		}
-			
+		
+		logger.info("  Resultado - " + resultado.getResultado());
+		logger.info("  CodError - " + (resultado.getCodError() == null ? "": resultado.getCodError()));
 		return resultado;
 	}
 	
@@ -157,10 +171,11 @@ public class ServiceImpl implements IService {
 	@Override
 	public ResultadoBean modificarUsuario(HttpSession session, Usuario usuario, Integer id) {
 		
+		logger.info("/modificarUsuario ");
+		
 		TokenBean tokenBean = new TokenBean();
 		if(session.getAttribute(CONS_PROPERTY_TOKEN) != null) {
 			tokenBean = (TokenBean) session.getAttribute(CONS_PROPERTY_TOKEN);
-			System.out.println("Token Modfi " + tokenBean.getToken());
 		}
 		
 		HttpEntity<Object> entity = new HttpEntity<Object>(Utils.convertUsuarioToMap(usuario), getHttpHeadersAuthentication(tokenBean.getToken()));
@@ -169,14 +184,40 @@ public class ServiceImpl implements IService {
 		ResponseEntity<ResultadoBean> resultado = clienteRestUsuario.exchange("http://localhost:8090/api/usuario/modificarUsuario/{id}", 
 																				HttpMethod.PUT, entity, ResultadoBean.class, mapParams);
 		
+		logger.info("  StatusCode - " + resultado.getStatusCodeValue());
+		logger.info("  Body - " + resultado.getBody().toString());
+		
 		return resultado.getBody();
 	}
 
 	@Override
-	public void eliminarUsuario(Integer id) {
+	public ResultadoBean eliminarUsuario(HttpSession session, Integer id) {
+		
+		logger.info("/eliminarUsuario ");
+		
+		TokenBean tokenBean = new TokenBean();
+		if(session.getAttribute(CONS_PROPERTY_TOKEN) != null) {
+			tokenBean = (TokenBean) session.getAttribute(CONS_PROPERTY_TOKEN);
+			logger.info("  Token - " + tokenBean.getToken());
+		}
+		
+		HttpEntity<Object> entity = new HttpEntity<Object>(null, getHttpHeadersAuthentication(tokenBean.getToken()));
+		
 		Map<String, String> mapParams = new HashMap<String, String>();
 		mapParams.put("id",id.toString());
-		clienteRestUsuario.delete("http://localhost:8090/api/usuario/eliminarUsuario/{id}", mapParams);
+		logger.info("  Invocacion eliminarUsuario");
+		ResponseEntity<ResultadoBean> resultado = clienteRestUsuario.exchange("http://localhost:8090/api/usuario/eliminarUsuario/{id}", 
+																				HttpMethod.DELETE, entity, ResultadoBean.class, mapParams);
+		logger.info("    StatusCode - " + resultado.getStatusCode().toString());
+		ResultadoBean resultadoBean = new ResultadoBean();
+		if(resultado.getStatusCode().toString().contains(Constantes.HTTP_204)) {
+			resultadoBean.setResultado(Constantes.CONS_RESULTADO_OK);
+		} else {
+			resultadoBean.setResultado(Constantes.CONS_RESULTADO_KO);
+			resultadoBean.setCodError(ConstantesErrores.COD_ERROR_104);
+		}
+		
+		return resultadoBean;
 	}
 	
 	/**

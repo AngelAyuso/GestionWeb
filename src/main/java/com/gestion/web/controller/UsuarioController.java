@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.commons.utils.ConstantesErrores;
+import com.commons.utils.Data;
 import com.gestion.web.generic.ResultadoBean;
 import com.gestion.web.generic.Usuario;
 import com.gestion.web.services.IService;
@@ -39,9 +41,12 @@ public class UsuarioController {
 	@Autowired
 	private MessageSource mensajes;
 	
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+	
 	/**
 	 * Controller de la pantalla principal
-	 * http://localhost:8080/index
+	 * http://localhost:8082/index
 	 * @param model
 	 * @return
 	 */
@@ -148,7 +153,7 @@ public class UsuarioController {
 	}
 	
 	public String exceptionLogin (HttpSession session, Model model, String user, String pwd) {
-		System.out.println("/exceptionLogin ");
+		logger.info("/exceptionLogin ");
 		model.addAttribute("login", Boolean.valueOf(false));
 		model.addAttribute("errorLogin", Boolean.valueOf(true));
 		model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(ConstantesErrores.COD_ERROR_000), null, LocaleContextHolder.getLocale()));
@@ -180,20 +185,21 @@ public class UsuarioController {
 		if(resultadoBean.getUsuario() != null && resultadoBean.getUsuario().getIdUsuario() != usuario.getIdUsuario()) {
 			existeUsuario = Boolean.valueOf(true);
 			codError = ConstantesErrores.COD_ERROR_106;
-			logger.info("UsuarioModel.altaUsuarioForm -   Existe usuario con DNI ");
+			logger.info("  DNI ya existe en la BBDD");
 		//Se comprueba si existe usuario por EMAIL
 		} else {
 			resultadoBean = serviceImpl.getUsuarioByEmail(usuario.getEmail());
 			if(resultadoBean.getUsuario() != null && resultadoBean.getUsuario().getIdUsuario() != usuario.getIdUsuario()) {
 				existeUsuario = Boolean.valueOf(true);
 				codError = ConstantesErrores.COD_ERROR_107;
-				logger.info("UsuarioModel.altaUsuarioForm -   Existe usuario con Email ");
+				logger.info("  DNI ya existe en la BBDD");
 			}
 		}
 		
 		if(!existeUsuario) {
+			logger.info("  Se invoca a modificarUsuario");
 			resultadoBean = serviceImpl.modificarUsuario(session, usuario, usuario.getIdUsuario());
-			logger.info(" beanResultado: " + resultadoBean.getResultado());
+			logger.info("  beanResultado: " + resultadoBean.getResultado());
 			 
 			if(Constantes.CONS_RESULTADO_OK.equals(resultadoBean.getResultado())) {	
 				model.addAttribute("login", Boolean.valueOf(true));
@@ -215,7 +221,7 @@ public class UsuarioController {
 	}
 	
 	public String exceptionModificarUsuario (HttpSession session, Usuario usuario, BindingResult result, Model model) {
-		System.out.println("/exceptionModificarUsuario ");
+		logger.info("/exceptionModificarUsuario ");
 		model.addAttribute("usuario", usuario);
 		model.addAttribute("errorUpdate", Boolean.valueOf(true));
 		model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(ConstantesErrores.COD_ERROR_000), null, LocaleContextHolder.getLocale()));
@@ -232,7 +238,8 @@ public class UsuarioController {
 	 */
 	@RequestMapping(path="/altaUsuarioForm", method = RequestMethod.POST)
 	@HystrixCommand(fallbackMethod = "exceptionInsertarUsuario")
-	public String insertarUsuario (@Valid @ModelAttribute("usuarioCA") com.gestion.web.generic.Usuario usuario, BindingResult result, String password2, Model model) {
+	public String insertarUsuario (@Valid @ModelAttribute("usuarioCA") com.gestion.web.generic.Usuario usuario, 
+									BindingResult result, String password2, Model model, HttpSession session ) {
 		
 		logger.info("/altaUsuarioForm ");
 		logger.info("Parametros entrada: " + usuario.toString());
@@ -241,6 +248,19 @@ public class UsuarioController {
 	        return Constantes.VIEW_ALTA_USUARIO;
 	    }
 		
+		if(!Data.isValid(usuario.getPassword()) || !Data.isValid(password2)) {
+			logger.info("  Password no introducida");
+			model.addAttribute("errorAlta", Boolean.valueOf(true));
+			model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(Constantes.COD_ERROR_201), null, LocaleContextHolder.getLocale()));
+			return Constantes.VIEW_ALTA_USUARIO;
+		} else if(!password2.equals(usuario.getPassword())) {
+			logger.info("  Password1 y Password2 no coinciden");
+			model.addAttribute("errorAlta", Boolean.valueOf(true));
+			model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(Constantes.COD_ERROR_202), null, LocaleContextHolder.getLocale()));
+			return Constantes.VIEW_ALTA_USUARIO;
+		}
+			
+		 
 		//Se comprueba si existe usuario por DNI
 		Boolean existeUsuario = Boolean.valueOf(false);
 		String codError = "";
@@ -248,27 +268,36 @@ public class UsuarioController {
 		if(resultadoBean.getUsuario() != null) {
 			existeUsuario = Boolean.valueOf(true);
 			codError = ConstantesErrores.COD_ERROR_106;
-			logger.info("UsuarioModel.altaUsuarioForm -   Existe usuario con DNI ");
+			logger.error("  DNI ya existe en la BBDD");
 		//Se comprueba si existe usuario por EMAIL
 		} else {
 			resultadoBean = serviceImpl.getUsuarioByEmail(usuario.getEmail());
 			if(resultadoBean.getUsuario() != null) {
 				existeUsuario = Boolean.valueOf(true);
 				codError = ConstantesErrores.COD_ERROR_107;
-				logger.info("UsuarioModel.altaUsuarioForm -   Existe usuario con Email ");
+				logger.error("  Email ya existe en la BBDD");
 			}
 		}
 		
+		//Sino existe usuario se crea
 		if(!existeUsuario) {
+			usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 			resultadoBean = serviceImpl.insertarUsuario(usuario);
-			logger.info(" beanResultado: " + resultadoBean.getResultado());
+			logger.info("  Se invoca a insertarUsuario");
+			logger.info("   beanResultado: " + resultadoBean.getResultado());
 			 
-			if(Constantes.CONS_RESULTADO_OK.equals(resultadoBean.getResultado())) {	
+			if(Constantes.CONS_RESULTADO_OK.equals(resultadoBean.getResultado())) {
 				model.addAttribute("login", Boolean.valueOf(true));
 				model.addAttribute("idUsuario", resultadoBean.getUsuario().getIdUsuario());
 				model.addAttribute("nombreUsuario", resultadoBean.getUsuario().getNombre());
+				
+				//Si se crea el Usuario se recupera el TOKEN de la sesion
+				logger.info("  Se recupera el Token para el Usuario");
+				resultadoBean = serviceImpl.getToken(session, usuario.getDni(), password2);
 				return Constantes.VIEW_MENU;
+				
 			} else {
+				logger.info("  Error al crear Usuario - codError: " + resultadoBean.getCodError());
 				model.addAttribute("errorAlta", Boolean.valueOf(true));
 				model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(resultadoBean.getCodError()), null, LocaleContextHolder.getLocale()));
 				return Constantes.VIEW_ALTA_USUARIO;
@@ -280,11 +309,55 @@ public class UsuarioController {
 		}
 	}
 	
-	public String exceptionInsertarUsuario (Usuario usuario, BindingResult result, String password2, Model model) {
-		System.out.println("/exceptionInsertarUsuario ");
+	public String exceptionInsertarUsuario (Usuario usuario, BindingResult result, String password2, Model model, HttpSession session) {
+		logger.info("/exceptionInsertarUsuario ");
 		model.addAttribute("usuario", usuario);
 		model.addAttribute("errorAlta", Boolean.valueOf(true));
 		model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(ConstantesErrores.COD_ERROR_000), null, LocaleContextHolder.getLocale()));
 		return Constantes.VIEW_ALTA_USUARIO;
+	}
+	
+	/**
+	 * Controller para acceder a la vista de Eliminar Usuario
+	 * @param model
+	 * @param idUsuario
+	 * @return
+	 */
+	@RequestMapping(path="/menuEliminarUsuario")
+	public String menuEliminarUsuario (Model model, String idUsuario) {
+		logger.info("/menuEliminarUsuario ");
+		model.addAttribute("idUsuario", idUsuario);
+		return Constantes.VIEW_ELIMINAR_USUARIO;
+	}
+	
+	/**
+	 * Controller para eliminar un Usuario
+	 * @param model
+	 * @param idUsuario
+	 * @return
+	 */
+	@RequestMapping(path="/eliminarUsuario", method = RequestMethod.POST)
+	@HystrixCommand(fallbackMethod = "exceptionEliminarUsuario")
+	public String eliminarUsuario (Model model, HttpSession session, String idUsuario) {
+		logger.info("/eliminarUsuario ");
+		logger.info("Invocamos eliminarUsuario ");
+		ResultadoBean resultadoBean = serviceImpl.eliminarUsuario(session, Integer.parseInt(idUsuario));
+		logger.info("  Resultado - " + resultadoBean.getResultado());
+		if(Constantes.CONS_RESULTADO_OK.equals(resultadoBean.getResultado())){
+			return Constantes.VIEW_INDEX;
+		} else {
+			model.addAttribute("errorEliminar", Boolean.valueOf(true));
+			model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(resultadoBean.getCodError()), null, LocaleContextHolder.getLocale()));
+			logger.error("  CodError - " + resultadoBean.getCodError());
+			return Constantes.VIEW_ELIMINAR_USUARIO;
+		}
+	}
+	
+	public String exceptionEliminarUsuario (Model model, HttpSession session, String idUsuario) {
+		logger.info("/exceptionEliminarUsuario ");
+		model.addAttribute("idUsuario", idUsuario == null ? "" : idUsuario);
+		model.addAttribute("errorEliminar", Boolean.valueOf(true));
+		model.addAttribute("errorMsg", mensajes.getMessage(Utils.getCodErrorLiteral(ConstantesErrores.COD_ERROR_000), null, LocaleContextHolder.getLocale()));
+		return Constantes.VIEW_ELIMINAR_USUARIO;
 	}
 }

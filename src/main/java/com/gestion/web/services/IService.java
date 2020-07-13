@@ -14,5 +14,5 @@ public interface IService {
 	
 	public ResultadoBean insertarUsuario(Usuario usuario);
 	public ResultadoBean modificarUsuario(HttpSession session, Usuario usuario, Integer id);
-	public void eliminarUsuario(Integer id);
+	public ResultadoBean eliminarUsuario(HttpSession session, Integer id);
 }

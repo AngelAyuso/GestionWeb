@@ -29,9 +29,8 @@
 				<div th:text=" ${errorMsg} " ></div>
 			</div>
 			
-			<input type="hidden" name="idusuario" th:field="*{idUsuario}"/>
 			<input type="submit" th:value="#{perfil.editar}"  class="btn">
-			<div id="btn2"><a class="nounderline" th:href="@{/menu(idUsuario=*{idUsuario})}" th:text="#{perfil.volver}"/></div> <!-- End Btn2 -->
+			<div id="btn2"><a class="nounderline" th:href="@{/menu(idUsuario=*{idUsuario})}" th:text="#{perfil.volver}"/></div>
 		</div>
 	</form>
 </body>

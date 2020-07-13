@@ -11,6 +11,7 @@
 		   <div class="box">
 				<h1><a th:text="#{menu.title}"/></h1>
 				  	<a th:href="@{/perfil(idUsuario=${idUsuario})}" th:text="#{menu.update}"></a> </br></br>
+				  	<a th:href="@{/menuEliminarUsuario(idUsuario=${idUsuario})}" th:text="#{menu.eliminar}"></a> </br></br>
 					<a th:href="@{/logout}" th:text="#{menu.logout}"></a>
 			</div>
 		</div>
